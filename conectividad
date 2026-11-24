@@ -69,5 +69,5 @@ void loop() {
     http.end();
   }
   
-  delay(10000);
+  delay(30000); // Espera 30 segundos (30,000 milisegundos) antes de repetir el ciclo
 }
