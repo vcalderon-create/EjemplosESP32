@@ -1,0 +1,73 @@
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h> // 1. Librería para la pantalla LCD
+
+// 2. Configurar pantalla (dirección 0x27, 16 columnas, 2 filas)
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+const char* ssid = "Wokwi-GUEST";
+const char* password = "";
+const char* serverName = "http://httpbin.org";
+
+void setup() {
+  Serial.begin(115200);
+  
+  // 3. Iniciar la pantalla y encender la luz de fondo
+  lcd.init();
+  lcd.backlight();
+  
+  lcd.setCursor(0, 0); // Columna 0, Fila 0
+  lcd.print("Conectando WiFi");
+  
+  WiFi.begin(ssid, password);
+  
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  
+  // Mostrar confirmación e IP en el LCD
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("WiFi Conectado!");
+  lcd.setCursor(0, 1); // Columna 0, Fila 1 (segunda línea)
+  lcd.print(WiFi.localIP());
+  
+  delay(2000); // Pausa de 2 segundos para poder leer la IP
+}
+
+void loop() {
+  if (WiFi.status() == WL_CONNECTED) {
+    HTTPClient http;
+    
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Enviando HTTP...");
+    
+    http.begin(serverName);
+    int httpResponseCode = http.GET();
+    
+    lcd.clear();
+    if (httpResponseCode > 0) {
+      lcd.setCursor(0, 0);
+      lcd.print("HTTP OK!");
+      lcd.setCursor(0, 1);
+      lcd.print("Codigo: ");
+      lcd.print(httpResponseCode); // Mostrará "Codigo: 200"
+      
+      // El texto largo sigue saliendo por el Monitor Serie
+      String payload = http.getString();
+      Serial.println(payload);
+    } else {
+      lcd.setCursor(0, 0);
+      lcd.print("Error HTTP:");
+      lcd.setCursor(0, 1);
+      lcd.print(httpResponseCode);
+    }
+    
+    http.end();
+  }
+  
+  delay(10000);
+}
